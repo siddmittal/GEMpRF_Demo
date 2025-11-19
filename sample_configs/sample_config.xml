@@ -1,8 +1,9 @@
 <!-- 
-    "@Author  :   Siddharth Mittal",
-    "@Version :   1.0",
-    "@Contact :   siddharth.mittal@meduniwien.ac.at",
-    "@License :   (C)Copyright 2024 - 2025, Medical University of Vienna"
+    "@Author  		:   Siddharth Mittal",
+    "@Contact 		:   siddharth.mittal@meduniwien.ac.at",
+    "@License 		:   (C)Copyright 2024 - 2025, Medical University of Vienna",
+	"@Cite DOI 		: 	https://doi.org/10.1101/2025.05.16.654560",
+	"@Paper Tile	:	GPU-Empowered Mapping of Population Receptive Fields for Large-Scale fMRI Analysis"
 -->
 
 <!-- Sample CHN Retinotpic Data: https://openneuro.org/datasets/ds004698/versions/3.0.0 -->
@@ -156,4 +157,5 @@
   </search_space>
 
 </root>
+
 
