@@ -33,11 +33,11 @@
 	<!-- Set to "True" if the input data is organized in BIDS format, select "individual" or "concatenated" run type -->
     <BIDS enable="True" run_type="individual" comment="options are individual/concatenated">
 	
-      <basepath>/ceph/mri.meduniwien.ac.at/projects/physics/fmri/data/stimsim24/</basepath>
+      <basepath>Path/to/data/CHN_DATA/BIDS</basepath>
       <append_to_basepath>derivatives, fmriprep</append_to_basepath>
 
       <!-- Directory name for results; backups created with timestamp if overwrite="True" -->
-      <results_anaylsis_id overwrite="False">NyuDataAnalysis</results_anaylsis_id>
+      <results_anaylsis_id overwrite="False">CHNDataAnalysisResults</results_anaylsis_id>
 
       <!-- NOTE: Case sensitive, provide the exact values!!!
            For the analysis, sub, ses, task, run, hemi,
@@ -156,3 +156,4 @@
   </search_space>
 
 </root>
+
