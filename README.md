@@ -29,7 +29,7 @@ Quick start (Windows / PowerShell)
 
 ```
 
-python example-001_purpose-analyse-fmriprep-data.py
+python run_gemprf_demo.py
 
 ```
 
