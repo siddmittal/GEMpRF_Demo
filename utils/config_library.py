@@ -61,7 +61,17 @@ def choose_config():
     options = get_config_library()
 
     # print("\nAvailable GEM-pRF configuration profiles:\n")
-    print("\033[92m\n\nHey there! You're in GEM-pRF interactive mode.\nQuestions? Compliments? Ping the author, Siddharth Mittal.\nChoose a config and let’s roll...\n\033[0m")
+    # print("\033[92m\n\nHey there! You're in GEM-pRF interactive mode.\nQuestions? Compliments? Ping the author, Siddharth Mittal.\nChoose a config and let’s roll...\n\033[0m")
+
+    print("\033[92m"
+          "\n\n"
+        "\n============================================================"
+        "\n             🚀 GEM-pRF Demo — Interactive Mode"
+        "\n============================================================\n"
+        "\nHey there! You're in GEM-pRF interactive mode."
+        "\nQuestions? Compliments? Ping the author, Siddharth Mittal."
+        "\nChoose a config and let’s roll...\n"
+        "\033[0m")
 
 
     for i, c in enumerate(options, 1):

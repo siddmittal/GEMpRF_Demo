@@ -7,23 +7,27 @@
 """
 
 import gemprf as gp
+from utils.messages import Messages
 
-CONFIG_FILEPATH = r"D:/GEMpRF-DemoKit/sample_configs/example-001_runtype-individual_input-bids_desc-analyse-prfprepare-data.xml"
+# Want to pick a config manually?
+# Set CONFIG_FILEPATH below and set interactively_choose_config_file = False.
+CONFIG_FILEPATH = r"path/to/your/config.xml"
 
 if __name__ == "__main__":
     interactively_choose_config_file = True
     run_auto_path_setting = True
     run_auto_gpu_check = True
-    
-    # (OPTIONAL) choose config file interactively
+
+    ####################################################
+    # NOTE: (OPTIONAL) Choose config file interactively
+    #####################################################
     if interactively_choose_config_file:
         from utils.config_library import choose_config
         CONFIG_FILEPATH = choose_config()
 
     # (OPTIONAL) path settings - only to assist you    
     if run_auto_path_setting:
-        print("\033[38;5;208m" + "\n\nAUTO path setting is running...\nYour config file will be updated with the correct paths relative for this demo program.\n"
-            "If you prefer to set paths manually, edit the XML configuration file and comment out this step.\n" + "\033[0m")
+        Messages.print_message("005", "yellow")
         from utils.auto_path import auto_path_setting
         auto_path_setting(CONFIG_FILEPATH)    
 
@@ -31,14 +35,25 @@ if __name__ == "__main__":
     final_config = CONFIG_FILEPATH    
     if run_auto_gpu_check:
         from utils.gpu_info import analyze_gpus, handle_gpu_decision
-        print("\nChecking GPU availability...\n")
+        Messages.print_message("006", "yellow")
 
         final_config = handle_gpu_decision(analyze_gpus(), CONFIG_FILEPATH)
         if final_config is None:
-            print("\033[91mExiting due to insufficient GPU memory.\033[0m")
+            Messages.print_message("007", "red")
             exit(1)
 
-    # (THE REAL DEAL)
+    #####################################################
+    # --------------- (THE REAL DEAL) ----------------- #
+    #####################################################
     # Run GEMpRF analysis based on configuration file
-    gp.run(final_config)
-    print("GEMpRF analysis complete.")
+    try:
+        gp.run(final_config)
+    except Exception as e:
+        print(f"An error occurred during GEMpRF execution: {e}")
+    finally:
+        import os
+        Messages.print_message(
+            "009",
+            "green",
+            custom_format={"folder": os.path.dirname(final_config), "updated_name": os.path.basename(final_config), "sample_name": "sample_config.xml"}
+        )
