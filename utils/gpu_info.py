@@ -386,16 +386,164 @@ def handle_gpu_decision(result, config_path):
         coarse_result["additional_gpus"]
     )
 
+    coarse_path = coarse_path.replace("\\", "/")
     print(
         "\033[92m\nCreated coarse-grid config:\n"
         f"  {coarse_path}\n"
-        "Running GEM-pRF with reduced pRF grid (11×11×5)...\n\n\033[0m"
+        "\nRunning GEM-pRF with reduced pRF grid (11×11×5)...\n\n\033[0m"
     )
 
     return coarse_path
 
 
+def format_info(info):
+    if isinstance(info, str):
+        return info
+
+    lines = []
+    for k, v in info.items():
+        # Indent nested dicts/lists nicely
+        if isinstance(v, (dict, list)):
+            lines.append(f"{k}:")
+            lines.append(f"  {v}")
+        else:
+            lines.append(f"{k}: {v}")
+    return "\n".join(lines)
+
+def cupy_gpu_sanity_check_verbose():
+    """
+    Stepwise CuPy+GPU sanity check.
+
+    Returns:
+        (ok: bool, info: dict or str)
+        - ok True  => info is a dict with details (cupy_version, cuda_runtime, cuda_driver, device_count, notes)
+        - ok False => info is a helpful error message (str) or dict with diagnostic fields.
+    """
+    # Step 1: Try import
+    try:
+        import cupy as cp
+    except Exception as imp_err:
+        msg = str(imp_err)
+        # Common symptoms: missing shared libs like libnvrtc.so.* or libcudart.so.*
+        if "libnvrtc" in msg or "libcudart" in msg or "cannot open shared object file" in msg:
+            advice = (
+                "CuPy import failed because required CUDA libraries weren't found.\n"
+                "This usually means the installed CuPy wheel was built for a different CUDA version\n"
+                "than the CUDA runtime libraries installed on the system.\n\n"
+                "Suggestions:\n"
+                "  • If you want CuPy that matches your system, install the wheel for your CUDA:\n"
+                "      pip install cupy-cuda12x   # if your system CUDA is 12.x\n"
+                "      pip install cupy-cuda11x   # if your system CUDA is 11.x\n"
+                "  • Alternatively ensure your CUDA libs are on LD_LIBRARY_PATH (or in /usr/lib):\n"
+                "      export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH\n"
+            )
+            return False, f"CuPy import error: {msg}\n\n{advice}"
+        else:
+            return False, f"Failed to import CuPy: {msg}"
+
+    # From here on cp is available
+    try:
+        # Step 2: Check device count quickly
+        try:
+            device_count = cp.cuda.runtime.getDeviceCount()
+        except Exception as e_devcount:
+            s = str(e_devcount)
+            # Often indicates runtime/lib mismatch or driver problem
+            if "cudaError" in s or "cannot open shared object file" in s or "libnvrtc" in s:
+                return False, {
+                    "error_stage": "device_count",
+                    "error": s,
+                    "diagnosis": "Failed when querying device count. Likely CuPy/CUDA library mismatch or driver problem.",
+                    "suggestion": "Check that CuPy was installed for your CUDA version and that the CUDA toolkit libs are present."
+                }
+            return False, f"Error querying device count: {s}"
+
+        if device_count == 0:
+            return False, "No CUDA device detected (getDeviceCount() returned 0)."
+
+        # Step 3: Try a trivial GPU operation to ensure kernels can be launched
+        try:
+            a = cp.arange(5)
+            b = a * 2
+            # force synchronization and actual kernel execution
+            cp.cuda.Stream.null.synchronize()
+        except Exception as gpu_op_err:
+            s = str(gpu_op_err)
+            # Look for the usual mismatch clues
+            if "libnvrtc" in s or "libcudart" in s or "cannot open shared object file" in s:
+                diagnosis = "Import succeeded but runtime library load failed when launching GPU code. CuPy was likely built for a different CUDA."
+                suggestion = (
+                    "Reinstall CuPy with the wheel matching your CUDA (e.g., pip install cupy-cuda12x) "
+                    "or install the CUDA version that CuPy expects."
+                )
+                return False, {"error_stage": "gpu_op", "error": s, "diagnosis": diagnosis, "suggestion": suggestion}
+            else:
+                return False, {"error_stage": "gpu_op", "error": s, "diagnosis": "GPU op failed for an unknown reason."}
+
+        # Step 4: Query runtime & driver versions
+        try:
+            runtime_ver = cp.cuda.runtime.runtimeGetVersion()
+            driver_ver = cp.cuda.runtime.driverGetVersion()
+            # Convert encoded int (e.g., 12020) to major.minor if possible
+            def parse_ver(v):
+                try:
+                    v = int(v)
+                    major = v // 1000
+                    minor = (v % 1000) // 10
+                    return f"{major}.{minor}"
+                except Exception:
+                    return str(v)
+            runtime_str = parse_ver(runtime_ver)
+            driver_str = parse_ver(driver_ver)
+        except Exception as ver_err:
+            # not critical — driver/runtime query failed but GPU ops already worked
+            return True, {
+                "cupy_version": getattr(cp, "__version__", "unknown"),
+                "device_count": device_count,
+                "note": "GPU operations worked, but could not query runtime/driver versions.",
+                "version_query_error": str(ver_err)
+            }
+
+        # Optional quick compatibility hint:
+        # CuPy wheels embed the CUDA ABI they were built for. If import worked and trivial ops passed,
+        # we consider this environment usable. But if the runtime major differs from what you expect,
+        # we still warn.
+        # We can attempt to guess CuPy's compiled CUDA major from cp.__cuda_version__ if available.
+        compiled_cuda = getattr(cp, "__cuda_version__", None)  # e.g. "12.2"
+        notes = []
+        if compiled_cuda:
+            # compare major parts
+            try:
+                comp_major = int(str(compiled_cuda).split(".")[0])
+                run_major = int(runtime_str.split(".")[0])
+                if comp_major != run_major:
+                    notes.append(
+                        f"Warning: CuPy reports it was built for CUDA {compiled_cuda} but runtime is {runtime_str}. "
+                        "This might be OK if libc ABI is compatible, but can also be a source of subtle errors."
+                    )
+            except Exception:
+                pass
+
+        info = {
+            "cupy_version": getattr(cp, "__version__", "unknown"),
+            "cupy_compiled_for_cuda": compiled_cuda,
+            "cuda_runtime_reported": runtime_str,
+            "cuda_driver_reported": driver_str,
+            "device_count": device_count,
+            "notes": notes or ["OK — import, device detection, and a trivial GPU op succeeded."]
+        }
+        return True, info
+
+    except Exception as final_e:
+        return False, f"Unexpected error during CuPy sanity check: {final_e}"
+
 if __name__ == '__main__':
+    # CuPy/CUDA matching sanity check
+    ok, info = cupy_gpu_sanity_check_verbose()
+    print("OK:", ok)
+    print(format_info(info))
+    print()
+
     # quick CLI test
     res = analyze_gpus()
     print(res['summary'])

@@ -34,8 +34,12 @@ if __name__ == "__main__":
     # (OPTIONAL) GPU memory check — only to assist you
     final_config = CONFIG_FILEPATH    
     if run_auto_gpu_check:
-        from utils.gpu_info import analyze_gpus, handle_gpu_decision
+        from utils.gpu_info import analyze_gpus, handle_gpu_decision, cupy_gpu_sanity_check_verbose, format_info
         Messages.print_message("006", "yellow")
+        ok, info = cupy_gpu_sanity_check_verbose()
+        if not ok:
+            print(format_info(info))
+            exit(1)
 
         final_config = handle_gpu_decision(analyze_gpus(), CONFIG_FILEPATH)
         if final_config is None:
