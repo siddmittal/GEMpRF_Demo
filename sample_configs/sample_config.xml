@@ -2,12 +2,9 @@
     "@Author  		:   Siddharth Mittal",
     "@Contact 		:   siddharth.mittal@meduniwien.ac.at",
     "@License 		:   (C)Copyright 2024 - 2025, Medical University of Vienna",
-	  "@Cite DOI 		: 	https://doi.org/10.1101/2025.05.16.654560",
+	  "@Cite DOI 		: 	https://doi.org/10.1016/j.media.2025.103891",
 	  "@Paper Title	:	GPU-Empowered Mapping of Population Receptive Fields for Large-Scale fMRI Analysis"
 -->
-
-<!-- Sample CHN Retinotpic Data: https://openneuro.org/datasets/ds004698/versions/3.0.0 -->
-<!-- WARNING: CHN Retinotpic Data contains Stimulus in .Mat format so, you must convert it to Nifit format -->
 
 <root>
   <refine_fitting enable="True" refinefit_on_gpu="True"/> <!-- Execute refine fitting on GPU if sufficient GPU memory is available -->
@@ -16,7 +13,7 @@
   <stimulus comment="Only in Nifti Format">
 
     <!-- File path for stimulus directory -->
-    <directory>Path/to/data/CHN_DATA/BIDS/stimuli</directory>	
+    <directory>Path/to/data/BIDS/stimuli</directory>	
     <visual_field>8</visual_field> <!-- Visual field Radius -->
     <width>101</width>
     <height>101</height>
@@ -34,11 +31,11 @@
 	<!-- Set to "True" if the input data is organized in BIDS format, select "individual" or "concatenated" run type -->
     <BIDS enable="True" run_type="individual" comment="options are individual/concatenated">
 	
-      <basepath>Path/to/data/CHN_DATA/BIDS</basepath>
+      <basepath>Path/to/data/BIDS</basepath>
       <append_to_basepath>derivatives, fmriprep</append_to_basepath>
 
       <!-- Directory name for results; backups created with timestamp if overwrite="True" -->
-      <results_anaylsis_id overwrite="False">CHNDataAnalysisResults</results_anaylsis_id>
+      <results_anaylsis_id overwrite="False">GEMDataAnalysisResults</results_anaylsis_id>
 
       <!-- NOTE: Case sensitive, provide the exact values!!!
            For the analysis, sub, ses, task, run, hemi,
