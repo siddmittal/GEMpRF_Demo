@@ -7,7 +7,7 @@
 	  "@Paper Title	:	  GPU-Empowered Mapping of Population Receptive Fields for Large-Scale fMRI Analysis"
 -->
 <!-- Data Source: https://osf.io/seh6b -->
-<root>
+<root version="0.1.11">
   <refine_fitting enable="True" refinefit_on_gpu="True"/> <!-- Execute refine fitting on GPU if sufficient GPU memory is available -->
   
   <!-- Stimulus data -->
@@ -113,8 +113,6 @@
 
   <!-- Measured data section -->
   <measured_data>
-    <width>101</width>
-    <height>101</height>
     <batches>500</batches>
   </measured_data>
 
@@ -143,13 +141,14 @@
       <spatial_grid_xy use_from_file="True" key="analysis_params/spatial_grid_xy"/>
     </optional_analysis_params>
 
-    <!-- Default parameters when optional_analysis_params=False -->
-    <default_hrf t="(0, 45)" TR="1.2" peak_delay="6.16" under_shoot_delay="12.0" peak_disp="0.85" under_disp="0.82" peak_to_undershoot="2.15" normalize="true"/>
+    <!-- (DEFAULT) parameters when optional_analysis_params=False -->
     <!-- SPM HRF parameters -->
+    <default_hrf t="(0, 45)" TR="1.2" peak_delay="6.16" under_shoot_delay="12.0" peak_disp="0.85" under_disp="0.82" peak_to_undershoot="2.15" normalize="true"/>
 
     <default_spatial_grid visual_field_radius="13.5" num_horizontal_prfs="151" num_vertical_prfs="151"/>
 
     <default_sigmas num_sigmas="16" min_sigma="0.5" max_sigma="5"/>
+    <nDCT value="1" comment="DCT bases to account for low frequency drift. Generate (2 * nDCT + 1) cosine regressors"/>
 
   </search_space>
 
